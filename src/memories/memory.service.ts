@@ -147,20 +147,19 @@ export class MemoryService {
     pagination?.perPage && query.limit(pagination.perPage);
     pagination?.currentPage &&
       query.skip((pagination.currentPage - 1) * pagination.perPage);
+
     const [data, total] = await Promise.all([
-      query.exec(),
+      query.lean().exec(),
       this.memoryModel.countDocuments().exec(),
     ]);
     const transformedData = await this.attachDownloadUrl(data);
     const result = {
       data: transformedData.map((item) =>
-        plainToInstance(MemoryResponseDto, item, {
-          excludeExtraneousValues: true,
-        }),
+        plainToInstance(MemoryResponseDto, item),
       ),
       pages: Math.ceil(total / pagination?.perPage),
       total,
-      currentPage: pagination?.page || 1,
+      currentPage: pagination?.currentPage || 1,
     };
 
     return result;
@@ -212,21 +211,21 @@ export class MemoryService {
     }
   }
 
-  private async attachDownloadUrl(
-    results: MemoryResponseDto[],
-  ): Promise<MemoryResponseDto[]> {
+  private async attachDownloadUrl(results: any[]): Promise<any[]> {
     return Promise.all(
       results.map(async (result) => {
-        const memoryFiles = result.memoryContent.map((mc) => mc.filePath);
+        const memoryFiles = result.memoryContent.map(
+          (mc: { filePath: any }) => mc.filePath,
+        );
         const s3Paths = await Promise.all(
-          memoryFiles.map((filePath) =>
+          memoryFiles.map((filePath: string) =>
             this.s3Service.getDownloadUrl(
               this.configService.get<string>('AWS_S3_BUCKET_NAME'),
               filePath,
             ),
           ),
         );
-        result.memoryContent.forEach((item, idx) => {
+        result.memoryContent.forEach((item: { filePath: any }, idx: number) => {
           item.filePath = s3Paths[idx];
         });
         return result;

@@ -6,6 +6,13 @@ import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS?.split(',') || [];
+
+  app.enableCors({
+    origin: allowedOrigins,
+  });
+
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
@@ -40,6 +47,6 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const port = configService.get('PORT');
 
-  await app.listen(port ?? 3000);
+  await app.listen(port ?? 3000, '0.0.0.0');
 }
 bootstrap();

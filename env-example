@@ -4,11 +4,14 @@
 # Server port
 PORT=3000
 
+# CORS allowed origins (comma-separated)
+CORS_ALLOWED_ORIGINS=http://localhost:5173
+
 # MongoDB connection string
 MONGO_URI=mongodb://localhost:27017/
 DB_NAME=talkieMartin
 
-# Path to store uploaded files
-FILES_PATH=uploads
-
 JWT_SECRET=change_me
+
+# For local dev to
+BYPASS_AUTH=false

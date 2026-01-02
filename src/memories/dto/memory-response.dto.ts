@@ -51,6 +51,12 @@ export class MemoryResponseDto {
   @ApiProperty()
   @IsString()
   @Expose()
+  @Transform(({ obj }) => obj._id?.toString() || '')
+  id: string = '';
+
+  @ApiProperty()
+  @IsString()
+  @Expose()
   @Transform(({ value }) => {
     if (value === undefined || value === null) return '';
     return String(value).trim();
