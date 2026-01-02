@@ -30,7 +30,10 @@ export class UserService {
     const userData = await this.userModel
       .findOne({ $or: [{ username: query.username }, { email: query.email }] })
       .exec();
-    if (!userData) throw new BadRequestException('User does not exist');
+    if (!userData)
+      throw new BadRequestException(
+        'User does not exist or invalid credentials',
+      );
     return plainToInstance(
       withPassword ? UserResponseWithPasswordDto : UserResponseDto,
       userData.toJSON(),
