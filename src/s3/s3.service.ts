@@ -8,9 +8,11 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class S3Service {
+  constructor(private readonly configService: ConfigService) {}
   async checkBucketExists(bucketName: string): Promise<boolean> {
     const s3Client = new S3Client({});
     try {
@@ -71,6 +73,9 @@ export class S3Service {
     bucketName: string,
     fileName: string,
   ): Promise<string | null> {
+    if (this.configService.get<string>('ENV') === 'dev') {
+      return `https://picsum.photos/500/500?random=${Math.random()}`;
+    }
     const s3Client = new S3Client({});
     try {
       const fileExists = await this.checkFileExists(bucketName, fileName);
@@ -93,12 +98,13 @@ export class S3Service {
   }
 
   async deleteFiles(bucketName: string, fileNames: string[]): Promise<boolean> {
+    if (fileNames.length === 0) return null;
     const s3Client = new S3Client({});
     try {
       await s3Client.send(
         new DeleteObjectsCommand({
           Bucket: bucketName,
-          Delete: { Objects: fileNames.map((file) => ({ Key: file })) },
+          Delete: { Objects: fileNames?.map((file) => ({ Key: file })) },
         }),
       );
       return true;

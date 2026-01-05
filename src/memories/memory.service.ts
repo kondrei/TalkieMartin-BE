@@ -35,7 +35,7 @@ export class MemoryService {
       session.startTransaction();
       const memoryContent: MemoryContentDto[] = [];
       const fileNames: FileNamesDto[] = [];
-      files.map((file) => {
+      files?.map((file) => {
         const fileName = `${Date.now()}-${file.originalname}`;
         memoryContent.push({
           dateCreated: createMemoryDto.dateCreated,
@@ -198,7 +198,7 @@ export class MemoryService {
         this.configService.get<string>('AWS_S3_BUCKET_NAME'),
         files,
       );
-      if (!deleted) {
+      if (!deleted && files.length > 0) {
         throw new BadRequestException('Failed to delete files from S3');
       }
       await session.commitTransaction();
