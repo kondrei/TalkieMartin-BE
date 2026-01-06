@@ -34,7 +34,6 @@ import { PaginationDto } from './dto/pagination.dto';
 import { MemoryMimeTypes } from './types/memory-types';
 import { AuthGuard } from '../auth/auth.guard';
 import { User } from '../decorators/user.decorator';
-import { UserResponseDto } from '../user/dto/user-response.dto';
 
 @ApiTags('Family Memories')
 @ApiBearerAuth()
