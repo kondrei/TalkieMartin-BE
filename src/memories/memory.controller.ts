@@ -33,6 +33,7 @@ import { UpdateMemoryDto } from './dto/update-memory.dto';
 import { PaginationDto } from './dto/pagination.dto';
 import { MemoryMimeTypes } from './types/memory-types';
 import { AuthGuard } from '../auth/auth.guard';
+import { User } from '../decorators/user.decorator';
 
 @ApiTags('Family Memories')
 @ApiBearerAuth()
@@ -69,8 +70,9 @@ export class MemoryController {
     @Body() memory: MemoryDto,
     @UploadedFiles(new FilePipe(MemoryMimeTypes))
     files: Array<Express.Multer.File>,
+    @User() user: any,
   ) {
-    const result = await this.memoryService.create(memory, files);
+    const result = await this.memoryService.create(memory, files, user.sub);
     return plainToInstance(MemoryResponseDto, result.toObject());
   }
 

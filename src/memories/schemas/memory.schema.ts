@@ -35,6 +35,9 @@ export class Memory {
 
   @Prop({ type: [MemoryContent], default: [] })
   memoryContent: MemoryContent[];
+
+  @Prop({ required: true })
+  userId: string;
 }
 
 export const MemorySchema = SchemaFactory.createForClass(Memory);

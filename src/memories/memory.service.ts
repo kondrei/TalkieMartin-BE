@@ -29,6 +29,7 @@ export class MemoryService {
   async create(
     createMemoryDto: MemoryDto,
     files: Array<Express.Multer.File>,
+    userId: string,
   ): Promise<any> {
     const session = await this.connection.startSession();
     try {
@@ -55,6 +56,7 @@ export class MemoryService {
         tags: createMemoryDto.tags,
         familyMembers: createMemoryDto.familyMembers,
         memoryContent: memoryContent,
+        userId: userId,
       });
       await memory.save({ session }).catch((error) => {
         if (error?.errorResponse?.code === 11000)

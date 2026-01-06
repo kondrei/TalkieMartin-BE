@@ -114,4 +114,13 @@ export class MemoryResponseDto {
     return value;
   })
   memoryContent: MemoryContentResponseDto[] = [];
+
+  @ApiProperty()
+  @IsString()
+  @Expose()
+  @Transform(({ value }) => {
+    if (value === undefined || value === null) return '';
+    return String(value).trim();
+  })
+  userId: string;
 }
