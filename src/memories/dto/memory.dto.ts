@@ -1,12 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type, Expose, Transform } from 'class-transformer';
-import { IsDate, IsString, IsArray, IsOptional } from 'class-validator';
+import {
+  IsDate,
+  IsString,
+  IsArray,
+  IsOptional,
+  IsNotEmpty,
+} from 'class-validator';
 
 export class MemoryDto {
   @ApiProperty({ default: '' })
   @IsString()
+  @IsNotEmpty()
   @Expose()
-  title: string = '';
+  title: string;
 
   @ApiProperty({ required: false })
   @IsString()

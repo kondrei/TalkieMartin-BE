@@ -65,7 +65,7 @@ export class S3Service {
         }),
       );
     } catch (error) {
-      throw new Error(`Failed to upload file to S3: ${error.message}`);
+      throw new Error('Failed to upload file to S3');
     }
   }
 
