@@ -82,6 +82,19 @@ export class MemoryResponseDto {
   })
   tags: string[] = [];
 
+  @ApiProperty()
+  @IsDate()
+  @Type(() => Date)
+  @Expose()
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') {
+      return new Date();
+    }
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? new Date() : date;
+  })
+  dateCreated: Date = new Date();
+
   @ApiProperty({ type: [String] })
   @IsArray()
   @IsString({ each: true })

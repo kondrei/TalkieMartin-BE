@@ -13,9 +13,7 @@ export class FilePipe implements PipeTransform {
       const isValid = this.fileTypes.includes(file.mimetype);
 
       if (!isValid) {
-        throw new BadRequestException(
-          `Invalid file type. Expected one of: ${this.fileTypes.join(', ')}, but got: ${file.mimetype}`,
-        );
+        throw new BadRequestException(`Unsupported file type`);
       }
     });
 
