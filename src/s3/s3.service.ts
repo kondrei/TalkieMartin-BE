@@ -12,14 +12,15 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class S3Service {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly s3Client: S3Client,
+  ) {}
   async checkBucketExists(bucketName: string): Promise<boolean> {
-    const s3Client = new S3Client({});
     try {
-      await s3Client.send(new HeadBucketCommand({ Bucket: bucketName }));
+      await this.s3Client.send(new HeadBucketCommand({ Bucket: bucketName }));
       return true;
     } catch (error) {
-      console.error('Error checking if bucket exists in S3:', error);
       return false;
     }
   }
@@ -27,9 +28,8 @@ export class S3Service {
     bucketName: string,
     fileName: string,
   ): Promise<boolean> {
-    const s3Client = new S3Client({});
     try {
-      await s3Client.send(
+      await this.s3Client.send(
         new HeadObjectCommand({ Bucket: bucketName, Key: fileName }),
       );
       return true;
@@ -40,8 +40,7 @@ export class S3Service {
       ) {
         return false;
       }
-      console.error('Error checking if file exists in S3:', error);
-      throw error;
+      throw new Error('Failed to check file existence in S3');
     }
   }
 
@@ -49,12 +48,10 @@ export class S3Service {
     bucketName: string,
     files: Array<{ fileObject: Express.Multer.File; fileName: string }> = [],
   ): Promise<void> {
-    const s3Client = new S3Client({});
-
     try {
       await Promise.all(
         files.map(async (file) => {
-          await s3Client.send(
+          await this.s3Client.send(
             new PutObjectCommand({
               Bucket: bucketName,
               Key: file.fileName,
@@ -76,12 +73,10 @@ export class S3Service {
     if (this.configService.get<string>('ENV') === 'dev') {
       return `https://picsum.photos/500/500?random=${Math.random()}`;
     }
-    const s3Client = new S3Client({});
     try {
       const fileExists = await this.checkFileExists(bucketName, fileName);
 
       if (!fileExists) {
-        console.error(`File not found in S3: ${fileName}`);
         return null;
       }
 
@@ -89,19 +84,19 @@ export class S3Service {
         Bucket: bucketName,
         Key: fileName,
       });
-      const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+      const url = await getSignedUrl(this.s3Client, command, {
+        expiresIn: 3600,
+      });
       return url;
     } catch (error) {
-      console.error('Error generating signed URL:', error);
-      return null;
+      throw new Error('Failed to generate signed URL');
     }
   }
 
   async deleteFiles(bucketName: string, fileNames: string[]): Promise<boolean> {
     if (fileNames.length === 0) return null;
-    const s3Client = new S3Client({});
     try {
-      await s3Client.send(
+      await this.s3Client.send(
         new DeleteObjectsCommand({
           Bucket: bucketName,
           Delete: { Objects: fileNames?.map((file) => ({ Key: file })) },
@@ -109,8 +104,7 @@ export class S3Service {
       );
       return true;
     } catch (error) {
-      console.error('Error deleting files from S3:', error);
-      return false;
+      throw new Error('Failed to delete files from S3');
     }
   }
 }
