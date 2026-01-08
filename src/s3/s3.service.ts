@@ -7,7 +7,8 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { Injectable } from '@nestjs/common';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -15,6 +16,7 @@ export class S3Service {
   constructor(
     private readonly configService: ConfigService,
     private readonly s3Client: S3Client,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
   async checkBucketExists(bucketName: string): Promise<boolean> {
     try {
@@ -73,6 +75,12 @@ export class S3Service {
     if (this.configService.get<string>('ENV') === 'dev') {
       return `https://picsum.photos/500/500?random=${Math.random()}`;
     }
+    const cachedUrl = await this.cacheManager.get<string>(
+      `url:${bucketName}:${fileName}`,
+    );
+    if (cachedUrl) {
+      return cachedUrl;
+    }
     try {
       const fileExists = await this.checkFileExists(bucketName, fileName);
 
@@ -84,9 +92,17 @@ export class S3Service {
         Bucket: bucketName,
         Key: fileName,
       });
+
+      const ttlInSeconds = 3600;
+      const ttlInMilliseconds = ttlInSeconds * 1000;
       const url = await getSignedUrl(this.s3Client, command, {
-        expiresIn: 3600,
+        expiresIn: ttlInSeconds,
       });
+      await this.cacheManager.set(
+        `url:${bucketName}:${fileName}`,
+        url,
+        ttlInMilliseconds,
+      );
       return url;
     } catch (error) {
       throw new Error('Failed to generate signed URL');
