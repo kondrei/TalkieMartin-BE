@@ -6,10 +6,10 @@ import { MemoryModule } from './memories/memory.module';
 import { S3Module } from './s3/s3.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/auth.guard';
 import { JwtModule } from '@nestjs/jwt';
-import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
