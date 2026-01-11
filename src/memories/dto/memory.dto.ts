@@ -13,12 +13,14 @@ export class MemoryDto {
   @IsString()
   @IsNotEmpty()
   @Expose()
+  @Transform(({ value }) => value.trim())
   title: string;
 
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   @Expose()
+  @Transform(({ value }) => value.trim())
   description: string = '';
 
   @ApiProperty({ default: new Date().toISOString() })
