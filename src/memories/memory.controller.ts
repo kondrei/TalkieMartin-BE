@@ -29,11 +29,11 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { MemoryResponseDto } from './dto/memory-response.dto';
 import { FilePipe } from '../pipes/file-validation.pipe';
 import { plainToInstance } from 'class-transformer';
-import { UpdateMemoryDto } from './dto/update-memory.dto';
 import { PaginationDto } from './dto/pagination.dto';
 import { MemoryMimeTypes } from './types/memory-types';
 import { AuthGuard } from '../auth/auth.guard';
 import { User } from '../decorators/user.decorator';
+import { UpdateMemoryDto } from './dto/update-memory.dto';
 
 @ApiTags('Family Memories')
 @ApiBearerAuth()
@@ -83,7 +83,7 @@ export class MemoryController {
   @UseInterceptors(FilesInterceptor('files', 5))
   @ApiConsumes('multipart/form-data')
   async updateMemory(
-    @Param() param: MemoryParamDto,
+    @Query() param: MemoryParamDto,
     @Body() memoryData: UpdateMemoryDto,
     @UploadedFiles(new FilePipe(MemoryMimeTypes))
     files: Array<Express.Multer.File>,
