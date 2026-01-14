@@ -11,10 +11,10 @@ import { plainToInstance } from 'class-transformer';
 import { FileNamesDto, MemoryContentDto, MemoryDto } from './dto/memory.dto';
 import { PaginationResponseDto } from './dto/pagination-response.dto';
 import { MemoryResponseDto } from './dto/memory-response.dto';
-import { UpdateMemoryDto } from './dto/update-memory.dto';
 import { PaginationDto } from './dto/pagination.dto';
 import { S3Service } from '../s3/s3.service';
 import { ConfigService } from '@nestjs/config';
+import { UpdateMemoryDto } from './dto/update-memory.dto';
 
 @Injectable()
 export class MemoryService {
@@ -90,9 +90,9 @@ export class MemoryService {
       session.startTransaction();
 
       const existingMemory = await this.memoryModel
-        .findOne({ title })
+        .findOne({ title: { $regex: title, $options: 'i' } })
         .session(session)
-        .exec();
+        .lean();
 
       if (!existingMemory) {
         throw new NotFoundException('Memory not found');
@@ -100,6 +100,19 @@ export class MemoryService {
 
       const memoryContent: MemoryContentDto[] = [];
       const fileNames: FileNamesDto[] = [];
+
+      if (data?.deletedFiles && data.deletedFiles.length > 0) {
+        data?.deletedFiles?.map((filePath: string) => {
+          existingMemory.memoryContent = existingMemory.memoryContent.filter(
+            (mc: { filePath: string }) => mc.filePath !== filePath,
+          );
+        });
+
+        await this.s3Service.deleteFiles(
+          this.configService.get<string>('AWS_S3_BUCKET_NAME'),
+          data.deletedFiles,
+        );
+      }
 
       files.forEach((file) => {
         const fileName = `${Date.now()}-${file.originalname}`;
@@ -120,10 +133,23 @@ export class MemoryService {
         fileNames,
       );
 
+      const updatedMemoryContent = [
+        ...existingMemory.memoryContent,
+        ...memoryContent,
+      ];
+
       const updated = await this.memoryModel
         .findOneAndUpdate(
-          { title },
-          { $push: { memoryContent: { $each: memoryContent } } },
+          { title: { $regex: title, $options: 'i' } },
+          {
+            $set: {
+              memoryContent: updatedMemoryContent,
+              title: data.title,
+              description: data.description,
+              tags: data.tags,
+              familyMembers: data.familyMembers,
+            },
+          },
           {
             new: true,
             session,
@@ -169,7 +195,7 @@ export class MemoryService {
 
   async findOne(title: string): Promise<MemoryResponseDto> {
     const result = await this.memoryModel
-      .findOne({ title })
+      .findOne({ title: { $regex: title, $options: 'i' } })
       .orFail()
       .lean()
       .catch(() => {
@@ -185,7 +211,10 @@ export class MemoryService {
     try {
       session.startTransaction();
       const result = await this.memoryModel
-        .findOneAndDelete({ title }, { includeResultMetadata: true, session })
+        .findOneAndDelete(
+          { title: { $regex: title, $options: 'i' } },
+          { includeResultMetadata: true, session },
+        )
         .exec();
       if (!result.value) {
         throw new NotFoundException('Memory not found');
