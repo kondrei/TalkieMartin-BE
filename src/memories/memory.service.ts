@@ -102,19 +102,27 @@ export class MemoryService {
       const fileNames: FileNamesDto[] = [];
 
       if (data?.deletedFiles && data.deletedFiles.length > 0) {
-        data?.deletedFiles?.map((filePath: string) => {
-          existingMemory.memoryContent = existingMemory.memoryContent.filter(
-            (mc: { filePath: string }) => mc.filePath !== filePath,
-          );
-        });
+        const validDeletedFiles = data.deletedFiles.filter(
+          (f: any) => typeof f === 'string' && f.trim(),
+        );
+
+        const deletedFileNames = validDeletedFiles.map((f) =>
+          decodeURIComponent(f.split('/').pop() || ''),
+        );
+
+        const deletedSet = new Set(deletedFileNames.map((f) => f.trim()));
+
+        existingMemory.memoryContent = existingMemory.memoryContent.filter(
+          (mc) => !deletedSet.has(mc.filePath.trim()),
+        );
 
         await this.s3Service.deleteFiles(
           this.configService.get<string>('AWS_S3_BUCKET_NAME'),
-          data.deletedFiles,
+          deletedFileNames,
         );
       }
 
-      files.forEach((file) => {
+      files?.forEach((file) => {
         const fileName = `${Date.now()}-${file.originalname}`;
         memoryContent.push({
           dateCreated: data.dateCreated,
@@ -128,27 +136,28 @@ export class MemoryService {
         });
       });
 
-      await this.s3Service.uploadFiles(
-        this.configService.get<string>('AWS_S3_BUCKET_NAME'),
-        fileNames,
-      );
+      fileNames?.length &&
+        (await this.s3Service.uploadFiles(
+          this.configService.get<string>('AWS_S3_BUCKET_NAME'),
+          fileNames,
+        ));
 
       const updatedMemoryContent = [
         ...existingMemory.memoryContent,
         ...memoryContent,
       ];
-
+      const savedData = {
+        memoryContent: updatedMemoryContent,
+        ...(existingMemory.title !== data.title && { title: data.title }),
+        description: data.description,
+        tags: data.tags,
+        familyMembers: data.familyMembers,
+      };
       const updated = await this.memoryModel
         .findOneAndUpdate(
           { title: { $regex: title, $options: 'i' } },
           {
-            $set: {
-              memoryContent: updatedMemoryContent,
-              title: data.title,
-              description: data.description,
-              tags: data.tags,
-              familyMembers: data.familyMembers,
-            },
+            $set: savedData,
           },
           {
             new: true,
@@ -164,6 +173,9 @@ export class MemoryService {
     } catch (error) {
       await session.abortTransaction();
       session.endSession();
+      if (error.code === 11000) {
+        throw new BadRequestException('Title already exists');
+      }
       throw error;
     }
   }

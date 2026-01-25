@@ -115,7 +115,11 @@ export class S3Service {
       await this.s3Client.send(
         new DeleteObjectsCommand({
           Bucket: bucketName,
-          Delete: { Objects: fileNames?.map((file) => ({ Key: file })) },
+          Delete: {
+            Objects: fileNames?.map((file) => ({
+              Key: decodeURIComponent(file),
+            })),
+          },
         }),
       );
       return true;
