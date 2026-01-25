@@ -9,6 +9,6 @@ export class UpdateMemoryDto extends MemoryDto {
   @IsString({ each: true })
   @IsOptional()
   @Expose()
-  @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
+  @Transform(({ value }) => (Array.isArray(value) ? value : value?.split(',')))
   deletedFiles: string[] = [];
 }

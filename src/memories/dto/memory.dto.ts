@@ -13,14 +13,14 @@ export class MemoryDto {
   @IsString()
   @IsNotEmpty()
   @Expose()
-  @Transform(({ value }) => value.trim())
+  @Transform(({ value }) => value?.trim())
   title: string;
 
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
   @Expose()
-  @Transform(({ value }) => value.trim())
+  @Transform(({ value }) => value?.trim())
   description: string = '';
 
   @ApiProperty({ default: new Date().toISOString() })
@@ -41,7 +41,7 @@ export class MemoryDto {
   @IsString({ each: true })
   @IsOptional()
   @Expose()
-  @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
+  @Transform(({ value }) => (Array.isArray(value) ? value : value?.split(',')))
   tags: string[] = [];
 
   @ApiProperty({ type: [String], required: false })
@@ -49,7 +49,7 @@ export class MemoryDto {
   @IsString({ each: true })
   @IsOptional()
   @Expose()
-  @Transform(({ value }) => (Array.isArray(value) ? value : value.split(',')))
+  @Transform(({ value }) => (Array.isArray(value) ? value : value?.split(',')))
   familyMembers: string[] = [];
 
   @ApiProperty({
